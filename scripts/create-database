@@ -1,0 +1,37 @@
+#!/bin/bash
+# shellcheck disable=SC2154
+
+# The SQL required to delete and re-create the database role and database.
+# Note this is destructive and all data will be lost.
+SQL="""
+  DROP DATABASE IF EXISTS ${PGDATABASE};
+  DROP ROLE IF EXISTS ${PGUSER};
+
+  CREATE ROLE ${PGUSER} WITH
+    LOGIN
+    NOSUPERUSER
+    INHERIT
+    NOCREATEDB
+    NOCREATEROLE
+    NOREPLICATION
+    PASSWORD '${PGPASSWORD}';
+
+  CREATE DATABASE ${PGDATABASE}
+    WITH
+    OWNER = ${PGUSER}
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'C'
+    LC_CTYPE = 'C'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+
+  GRANT TEMPORARY, CONNECT ON DATABASE ${PGDATABASE} TO PUBLIC;
+
+  GRANT ALL ON DATABASE ${PGDATABASE} TO ${PGUSER};
+"""
+
+# The database should be ignored.
+unset PGDATABASE
+
+echo "${SQL}" | PGUSER=${PGADMINUSER} PGPASSWORD=${PGADMINPASSWORD} psql postgres
