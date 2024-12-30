@@ -21,7 +21,11 @@ path = "src/bin/auth-play.rs"
 anyhow = "1.0.86"
 log = "0.4.22"
 
+auth-api.workspace = true
+auth-domain-core.workspace = true
+
 tokio.workspace = true
+tokio-graceful-shutdown.workspace = true
 tracing.workspace = true
 tracing-log.workspace = true
 

@@ -1,7 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/apps"
+    "crates/apps",
+    "crates/auth-api",
+    "crates/auth-domain-api",
+    "crates/auth-domain-core",
+    "crates/auth-utils"
 ]
 
 [workspace.package]
@@ -15,6 +19,14 @@ readme = "README.md"
 rust-version = "1.83"
 
 [workspace.dependencies]
+auth-api = { path = "crates/auth-api" }
+auth-domain-api = { path = "crates/auth-domain-api" }
+auth-domain-core = { path = "crates/auth-domain-core" }
+auth-utils = { path = "crates/auth-utils" }
+
+async-trait = "0.1.81"
+thiserror = "2.0.9"
+tokio-graceful-shutdown = "0.15.0"
 tracing-log = "0.2.0"
 
 [workspace.dependencies.tokio]
