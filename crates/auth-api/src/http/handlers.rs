@@ -1,9 +1,14 @@
-use crate::ApiError;
+use crate::{ApiError, Dist};
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 
 use auth_domain_api::AuthApi;
-use axum::{extract::Request, routing::get, Router};
-use hyper::body::Incoming;
+use axum::{
+    extract::Request,
+    response::{Html, IntoResponse, Response},
+    routing::get,
+    Router,
+};
+use hyper::{body::Incoming, header, StatusCode, Uri};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpStream;
 use tokio_graceful_shutdown::SubsystemHandle;
@@ -11,6 +16,8 @@ use tower::Service;
 use tower_http::timeout::TimeoutLayer;
 
 use super::{health, v1};
+
+static INDEX_HTML: &str = "index.html";
 
 pub fn get_routes(arch_api: Arc<AuthApi>) -> Router<()> {
     let v1_routes = v1::get_routes(arch_api.clone());
@@ -23,6 +30,7 @@ pub fn get_routes(arch_api: Arc<AuthApi>) -> Router<()> {
         .nest("/health", health_route)
         .nest("/api", api_routes)
         .layer(TimeoutLayer::new(Duration::from_secs(2)))
+        .fallback(static_handler)
 }
 
 pub async fn handle(socket: TcpStream, remote_addr: SocketAddr, tower_service: Router<()>, subsys: SubsystemHandle) -> Result<(), ApiError> {
@@ -45,4 +53,41 @@ pub async fn handle(socket: TcpStream, remote_addr: SocketAddr, tower_service: R
 
     tracing::debug!("Connection {} closed", remote_addr);
     Ok(())
+}
+
+#[tracing::instrument(level = "trace")]
+async fn static_handler(uri: Uri) -> impl IntoResponse {
+    let path = uri.path().trim_start_matches('/');
+
+    if path.is_empty() || path == INDEX_HTML {
+        return index_html().await;
+    }
+    let path = path.trim_start_matches("app/");
+
+    match Dist::get(path) {
+        Some(content) => {
+            let mime = mime_guess::from_path(path).first_or_octet_stream();
+            tracing::info!("Found content for {} with mime type {}", path, mime);
+            ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
+        }
+        None => {
+            if path.contains('.') {
+                tracing::debug!("{} not found", path);
+                return not_found().await;
+            }
+
+            index_html().await
+        }
+    }
+}
+
+async fn index_html() -> Response<axum::body::Body> {
+    match Dist::get(INDEX_HTML) {
+        Some(content) => Html(content.data).into_response(),
+        None => not_found().await,
+    }
+}
+
+async fn not_found() -> Response<axum::body::Body> {
+    (StatusCode::NOT_FOUND, "404").into_response()
 }

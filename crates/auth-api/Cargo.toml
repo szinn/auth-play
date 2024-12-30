@@ -15,7 +15,10 @@ publish = false
 auth-domain-api.workspace = true
 auth-utils.workspace = true
 
+headers = "0.3.8"
+mime_guess = "2.0.4"
 thiserror.workspace = true
+rust-embed = { version = "8.5.0", features = ["compression"] }
 tokio.workspace = true
 tokio-graceful-shutdown.workspace = true
 tracing.workspace = true
