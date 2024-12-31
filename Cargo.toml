@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/apps",
+    "crates/auth-api-frontend",
     "crates/auth-api",
     "crates/auth-domain-api",
     "crates/auth-domain-core",
@@ -20,6 +21,7 @@ rust-version = "1.83"
 
 [workspace.dependencies]
 auth-api = { path = "crates/auth-api" }
+auth-api-frontend = { path = "crates/auth-api-frontend" }
 auth-domain-api = { path = "crates/auth-domain-api" }
 auth-domain-core = { path = "crates/auth-domain-core" }
 auth-utils = { path = "crates/auth-utils" }

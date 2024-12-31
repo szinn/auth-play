@@ -135,6 +135,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 name = "auth-api"
 version = "0.1.0"
 dependencies = [
+ "auth-api-frontend",
  "auth-domain-api",
  "auth-utils",
  "axum",
@@ -142,14 +143,20 @@ dependencies = [
  "hyper",
  "hyper-util",
  "mime_guess",
- "npm_rs",
- "rust-embed",
  "thiserror 2.0.9",
  "tokio",
  "tokio-graceful-shutdown",
  "tower",
  "tower-http",
  "tracing",
+]
+
+[[package]]
+name = "auth-api-frontend"
+version = "0.1.0"
+dependencies = [
+ "npm_rs",
+ "rust-embed",
 ]
 
 [[package]]

@@ -1,6 +1,7 @@
-use crate::{ApiError, Dist};
+use crate::ApiError;
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 
+use auth_api_frontend::Dist;
 use auth_domain_api::AuthApi;
 use axum::{
     extract::Request,

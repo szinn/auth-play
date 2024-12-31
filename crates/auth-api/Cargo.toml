@@ -8,17 +8,16 @@ homepage.workspace = true
 repository.workspace = true
 readme.workspace = true
 rust-version.workspace = true
-build = "build.rs"
 publish = false
 
 [dependencies]
+auth-api-frontend.workspace = true
 auth-domain-api.workspace = true
 auth-utils.workspace = true
 
 headers = "0.3.8"
 mime_guess = "2.0.4"
 thiserror.workspace = true
-rust-embed = { version = "8.5.0", features = ["compression"] }
 tokio.workspace = true
 tokio-graceful-shutdown.workspace = true
 tracing.workspace = true
@@ -40,6 +39,3 @@ features = ["util"]
 [dependencies.tower-http]
 version = "0.6.0"
 features = ["timeout", "trace"]
-
-[build-dependencies]
-npm_rs = "1.0.0"
