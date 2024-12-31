@@ -2,10 +2,10 @@ use crate::ApiError;
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 
 use auth_api_frontend::Dist;
-use auth_domain_api::AuthApi;
+use auth_domain_api::AuthDomainApi;
 use axum::{
     extract::Request,
-    response::{Html, IntoResponse, Response},
+    response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router,
 };
@@ -20,7 +20,7 @@ use super::{health, v1};
 
 static INDEX_HTML: &str = "index.html";
 
-pub fn get_routes(arch_api: Arc<AuthApi>) -> Router<()> {
+pub fn get_routes(arch_api: Arc<AuthDomainApi>) -> Router<()> {
     let v1_routes = v1::get_routes(arch_api.clone());
 
     let api_routes = Router::new().nest("/v1", v1_routes);
@@ -61,7 +61,7 @@ async fn static_handler(uri: Uri) -> impl IntoResponse {
     let path = uri.path().trim_start_matches('/');
 
     if path.is_empty() || path == INDEX_HTML {
-        return index_html().await;
+        return Redirect::permanent("/app").into_response();
     }
     let path = path.trim_start_matches("app/");
 
@@ -82,13 +82,19 @@ async fn static_handler(uri: Uri) -> impl IntoResponse {
     }
 }
 
+#[tracing::instrument(level = "trace")]
 async fn index_html() -> Response<axum::body::Body> {
     match Dist::get(INDEX_HTML) {
-        Some(content) => Html(content.data).into_response(),
+        Some(content) => {
+            let mime = mime_guess::from_path(INDEX_HTML).first_or_octet_stream();
+            tracing::info!("Found actual content for index.html with mime type {}", mime);
+            Html(content.data).into_response()
+        }
         None => not_found().await,
     }
 }
 
+#[tracing::instrument(level = "trace")]
 async fn not_found() -> Response<axum::body::Body> {
     (StatusCode::NOT_FOUND, "404").into_response()
 }

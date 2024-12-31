@@ -9,6 +9,7 @@ impl HealthService {
         Self {}
     }
 }
+
 #[async_trait]
 impl HealthApi for HealthService {
     #[tracing::instrument(level = "trace", skip(self))]

@@ -1,6 +1,6 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use auth_domain_api::AuthApi;
+use auth_domain_api::AuthDomainApi;
 use axum::response::{IntoResponse, Response};
 use hyper::StatusCode;
 use tokio::net::TcpListener;
@@ -12,7 +12,7 @@ pub(crate) mod handlers;
 pub(crate) mod health;
 pub(crate) mod v1;
 
-pub async fn start_server(port: u16, auth_api: Arc<AuthApi>, subsys: SubsystemHandle) -> Result<(), ApiError> {
+pub async fn start_server(port: u16, auth_api: Arc<AuthDomainApi>, subsys: SubsystemHandle) -> Result<(), ApiError> {
     tracing::trace!("Starting http service");
 
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().map_err(|_| ApiError::BadPort(port))?;
