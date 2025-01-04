@@ -26,10 +26,15 @@ auth-domain-api = { path = "crates/auth-domain-api" }
 auth-domain-core = { path = "crates/auth-domain-core" }
 auth-utils = { path = "crates/auth-utils" }
 
-async-trait = "0.1.81"
+async-trait = "0.1.84"
+serde_json = "1.0.134"
 thiserror = "2.0.9"
 tokio-graceful-shutdown = "0.15.0"
 tracing-log = "0.2.0"
+
+[workspace.dependencies.serde]
+version = "1.0.217"
+features = ["derive"]
 
 [workspace.dependencies.tokio]
 version = "1.39.1"

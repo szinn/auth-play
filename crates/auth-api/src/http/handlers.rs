@@ -16,20 +16,20 @@ use tokio_graceful_shutdown::SubsystemHandle;
 use tower::Service;
 use tower_http::timeout::TimeoutLayer;
 
-use super::{health, v1};
+use super::{auth, health, v1};
 
 static INDEX_HTML: &str = "index.html";
 
-pub fn get_routes(arch_api: Arc<AuthDomainApi>) -> Router<()> {
-    let v1_routes = v1::get_routes(arch_api.clone());
-
+pub fn get_routes(auth_domain_api: Arc<AuthDomainApi>) -> Router<()> {
+    let v1_routes = v1::get_routes(auth_domain_api.clone());
     let api_routes = Router::new().nest("/v1", v1_routes);
-
-    let health_route: Router = Router::new().route("/", get(health::health)).with_state(arch_api.health_api.clone());
+    let auth_routes = auth::get_routes(auth_domain_api.auth_api.clone());
+    let health_route: Router = Router::new().route("/", get(health::health)).with_state(auth_domain_api.health_api.clone());
 
     axum::Router::new()
-        .nest("/health", health_route)
         .nest("/api", api_routes)
+        .nest("/auth", auth_routes)
+        .nest("/health", health_route)
         .layer(TimeoutLayer::new(Duration::from_secs(2)))
         .fallback(static_handler)
 }

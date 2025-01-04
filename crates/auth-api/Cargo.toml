@@ -15,14 +15,17 @@ auth-api-frontend.workspace = true
 auth-domain-api.workspace = true
 auth-utils.workspace = true
 
-headers = "0.3.8"
-mime_guess = "2.0.4"
+serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tokio-graceful-shutdown.workspace = true
 tracing.workspace = true
 
-axum = "0.7.5"
+axum = "0.8.1"
+axum-login = "0.16.0"
+headers = "0.4.0"
+mime_guess = "2.0.4"
 
 [dependencies.hyper]
 version = "1.3.1"

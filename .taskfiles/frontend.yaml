@@ -1,0 +1,15 @@
+---
+version: "3"
+
+tasks:
+  clean:
+    desc: Clean frontend
+    dir: frontend
+    cmds:
+      - rm -rf .svelte-kit build node_modules
+
+  install:
+    desc: _Install node modules
+    dir: frontend
+    cmds:
+      - npm install

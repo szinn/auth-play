@@ -7,3 +7,4 @@ vars:
 
 includes:
   pc: .taskfiles/pre-commit.yaml
+  fe: .taskfiles/frontend.yaml
