@@ -15,6 +15,7 @@ auth-api-frontend.workspace = true
 auth-domain-api.workspace = true
 auth-utils.workspace = true
 
+async-trait.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
@@ -23,7 +24,7 @@ tokio-graceful-shutdown.workspace = true
 tracing.workspace = true
 
 axum = "0.8.1"
-axum-login = "0.16.0"
+axum-login = "0.17.0"
 headers = "0.4.0"
 mime_guess = "2.0.4"
 
@@ -42,3 +43,8 @@ features = ["util"]
 [dependencies.tower-http]
 version = "0.6.0"
 features = ["timeout", "trace"]
+
+[dependencies.tower-sessions]
+version = "0.14.0"
+default-features = false
+features = ["signed"]

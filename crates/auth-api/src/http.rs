@@ -11,6 +11,7 @@ use crate::ApiError;
 pub(crate) mod auth;
 pub(crate) mod handlers;
 pub(crate) mod health;
+pub(crate) mod session;
 pub(crate) mod v1;
 
 pub async fn start_server(port: u16, auth_domain_api: Arc<AuthDomainApi>, subsys: SubsystemHandle) -> Result<(), ApiError> {

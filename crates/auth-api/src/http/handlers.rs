@@ -1,5 +1,5 @@
 use crate::ApiError;
-use std::{net::SocketAddr, sync::Arc, time::Duration};
+use std::{net::SocketAddr, sync::Arc};
 
 use auth_api_frontend::Dist;
 use auth_domain_api::AuthDomainApi;
@@ -9,28 +9,45 @@ use axum::{
     routing::get,
     Router,
 };
+use axum_login::{login_required, tower_sessions::SessionManagerLayer, AuthManagerLayerBuilder};
 use hyper::{body::Incoming, header, StatusCode, Uri};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpStream;
 use tokio_graceful_shutdown::SubsystemHandle;
 use tower::Service;
 use tower_http::timeout::TimeoutLayer;
+use tower_sessions::cookie::{time::Duration, Key};
+use tower_sessions::Expiry;
 
-use super::{auth, health, v1};
+use super::{auth, health, session::SessionAdapter, v1};
 
 static INDEX_HTML: &str = "index.html";
 
 pub fn get_routes(auth_domain_api: Arc<AuthDomainApi>) -> Router<()> {
-    let v1_routes = v1::get_routes(auth_domain_api.clone());
+    let session_adapter = SessionAdapter::new(auth_domain_api.auth_api.clone());
+
+    let v1_routes = v1::get_routes();
     let api_routes = Router::new().nest("/v1", v1_routes);
-    let auth_routes = auth::get_routes(auth_domain_api.auth_api.clone());
+    let auth_routes = auth::get_routes(session_adapter.clone());
     let health_route: Router = Router::new().route("/", get(health::health)).with_state(auth_domain_api.health_api.clone());
+
+    // Generate a cryptographic key to sign the session cookie.
+    let key = Key::generate();
+
+    let session_layer = SessionManagerLayer::new(session_adapter.clone())
+        .with_secure(false)
+        .with_expiry(Expiry::OnInactivity(Duration::days(1)))
+        .with_signed(key);
+
+    let auth_layer = AuthManagerLayerBuilder::new(session_adapter.clone(), session_layer).build();
 
     axum::Router::new()
         .nest("/api", api_routes)
-        .nest("/auth", auth_routes)
         .nest("/health", health_route)
-        .layer(TimeoutLayer::new(Duration::from_secs(2)))
+        .route_layer(login_required!(SessionAdapter, login_url = "/app"))
+        .nest("/auth", auth_routes)
+        .layer(auth_layer)
+        .layer(TimeoutLayer::new(std::time::Duration::from_secs(2)))
         .fallback(static_handler)
 }
 
