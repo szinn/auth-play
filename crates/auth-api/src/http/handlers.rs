@@ -19,11 +19,11 @@ use tower_http::timeout::TimeoutLayer;
 use tower_sessions::cookie::{time::Duration, Key};
 use tower_sessions::Expiry;
 
-use super::{auth, health, session::SessionAdapter, v1};
+use super::{auth, health, session::SessionAdapter, v1, Configuration};
 
 static INDEX_HTML: &str = "index.html";
 
-pub fn get_routes(auth_domain_api: Arc<AuthDomainApi>) -> Router<()> {
+pub fn get_routes(config: &Configuration, auth_domain_api: Arc<AuthDomainApi>) -> Router<()> {
     let session_adapter = SessionAdapter::new(auth_domain_api.auth_api.clone());
 
     let v1_routes = v1::get_routes();
@@ -32,7 +32,7 @@ pub fn get_routes(auth_domain_api: Arc<AuthDomainApi>) -> Router<()> {
     let health_route: Router = Router::new().route("/", get(health::health)).with_state(auth_domain_api.health_api.clone());
 
     // Generate a cryptographic key to sign the session cookie.
-    let key = Key::generate();
+    let key = Key::from(config.secret_key.as_bytes());
 
     let session_layer = SessionManagerLayer::new(session_adapter.clone())
         .with_secure(false)

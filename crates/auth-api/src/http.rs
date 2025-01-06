@@ -14,13 +14,20 @@ pub(crate) mod health;
 pub(crate) mod session;
 pub(crate) mod v1;
 
-pub async fn start_server(port: u16, auth_domain_api: Arc<AuthDomainApi>, subsys: SubsystemHandle) -> Result<(), ApiError> {
+#[derive(Debug, Clone)]
+pub struct Configuration {
+    pub port: u16,
+    pub secret_key: String,
+}
+
+pub async fn start_server(config: Configuration, auth_domain_api: Arc<AuthDomainApi>, subsys: SubsystemHandle) -> Result<(), ApiError> {
     tracing::trace!("Starting http service");
 
+    let port = config.port;
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().map_err(|_| ApiError::BadPort(port))?;
     let listener = TcpListener::bind(addr).await.unwrap();
 
-    let routes = handlers::get_routes(auth_domain_api.clone());
+    let routes = handlers::get_routes(&config, auth_domain_api.clone());
 
     tracing::info!("Listening on port {}", port);
     loop {

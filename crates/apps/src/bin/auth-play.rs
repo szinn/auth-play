@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::{Context, Result};
-use auth_api::http::start_server;
+use auth_api::http::{start_server, Configuration};
 use auth_db::connect_database;
 use auth_domain_core::create_auth;
 use auth_play::{config::AuthPlayConfig, logging};
@@ -20,8 +20,13 @@ async fn main() -> Result<()> {
     let database = connect_database(&config.database.database_url).await.context("Couldn't connect to database")?;
     let arch_service = Arc::new(create_auth(database).await.context("Couldn't create service")?);
 
+    let http_config = Configuration {
+        port: config.http.port,
+        secret_key: config.http.secret_key,
+    };
+
     let server = Toplevel::new(|s| async move {
-        s.start(SubsystemBuilder::new("http_api", |h| start_server(3000, arch_service, h)));
+        s.start(SubsystemBuilder::new("http_api", |h| start_server(http_config, arch_service, h)));
     })
     .catch_signals()
     .handle_shutdown_requests(Duration::from_secs(5));

@@ -11,8 +11,17 @@ pub struct AuthPlayDatabaseConfig {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct AuthPlayHttpConfig {
+    /// (required) Port to serve http traffic.
+    pub port: u16,
+    /// (required) Secret key for encrypting cookies.
+    pub secret_key: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct AuthPlayConfig {
     pub database: AuthPlayDatabaseConfig,
+    pub http: AuthPlayHttpConfig,
 }
 
 impl AuthPlayConfig {

@@ -1,0 +1,32 @@
+---
+version: "3"
+
+tasks:
+  init:
+    desc: Initialize database
+    cmds:
+      - '{{.PROJECT_DIR}}/scripts/create-database'
+
+  db:
+    desc: Connect to database
+    cmds:
+      - PGUSER=$PGADMINUSER PGPASSWORD=$PGADMINPASSWORD psql -h $PGHOST -d $PGDATABASE
+
+  migration:
+    desc: Migration commands
+    cmds:
+      - cargo run --bin migrator -- {{.CLI_ARGS}} -u $AUTH_PLAY__DATABASE_URL
+
+  new-migration:
+    desc: Create a new migration
+    cmds:
+      - sea-orm-cli migrate generate -d crates/auth-db {{.name}}
+    requires:
+      vars:
+        - name
+
+  entities:
+    desc: Generate entities
+    cmds:
+      - DATABASE_URL=$AUTH_PLAY__DATABASE__DATABASE_URL cargo run --bin migrator -- up
+      - sea-orm-cli generate entity -o crates/auth-db/src/entities --with-serde both -u $AUTH_PLAY__DATABASE__DATABASE_URL

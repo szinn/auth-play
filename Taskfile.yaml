@@ -6,5 +6,6 @@ vars:
     sh: "git rev-parse --show-toplevel"
 
 includes:
-  pc: .taskfiles/pre-commit.yaml
+  db: .taskfiles/database.yaml
   fe: .taskfiles/frontend.yaml
+  pc: .taskfiles/pre-commit.yaml
