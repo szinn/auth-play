@@ -11,6 +11,7 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
+auth-db.workspace = true
 auth-domain-api.workspace = true
 auth-utils.workspace = true
 

@@ -17,13 +17,25 @@ default-run = "auth-play"
 name = "auth-play"
 path = "src/bin/auth-play.rs"
 
+[[bin]]
+name = "migrator"
+path = "src/bin/migrator.rs"
+
+[lib]
+name = "auth_play"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow = "1.0.86"
+config = "0.15.4"
 log = "0.4.22"
 
 auth-api.workspace = true
+auth-db.workspace = true
 auth-domain-core.workspace = true
 
+serde.workspace = true
+thiserror.workspace = true
 tokio.workspace = true
 tokio-graceful-shutdown.workspace = true
 tracing.workspace = true
