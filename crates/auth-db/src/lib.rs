@@ -1,4 +1,6 @@
+pub mod entities;
 pub mod error;
+
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use async_trait::async_trait;
@@ -12,9 +14,7 @@ pub struct Migrator;
 #[async_trait]
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
-        vec![
-        // Box::new(m20240815_124028_create_items::Migration)
-        ]
+        vec![Box::new(m20250106_194018_users::Migration), Box::new(m20250106_205738_sessions::Migration)]
     }
 }
 
@@ -73,3 +73,6 @@ pub async fn connect_database(url: &str) -> Result<Arc<RepositoryAdapters>, Erro
 pub async fn run_migration_cli() {
     cli::run_cli(Migrator).await
 }
+
+pub(crate) mod m20250106_194018_users;
+pub(crate) mod m20250106_205738_sessions;
