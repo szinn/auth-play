@@ -1,5 +1,10 @@
 {
-  "files.exclude": {
-    "target/": true
+  "files": {
+    "associations": {
+      ".yamllint": "yaml"
+    },
+    "exclude": {
+      "target/": true
+    }
   }
 }
