@@ -1,5 +1,5 @@
 [package]
-name = "auth-domain-api"
+name = "auth-domain-models"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -11,9 +11,3 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-auth-db.workspace = true
-auth-domain-models.workspace = true
-auth-utils.workspace = true
-
-async-trait.workspace = true
-thiserror.workspace = true

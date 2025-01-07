@@ -34,14 +34,14 @@ impl AuthUser for User {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Credentials {
-    pub username: String,
-    pub password: String,
-    pub next: Option<String>,
+    pub _username: String,
+    pub _password: String,
+    pub _next: Option<String>,
 }
 
 #[derive(Clone)]
 pub(crate) struct SessionAdapter {
-    auth_api: ArcBox<dyn AuthApi>,
+    pub auth_api: ArcBox<dyn AuthApi>,
     store: MemoryStore,
 }
 
@@ -89,7 +89,7 @@ impl AuthnBackend for SessionAdapter {
     type Error = ApiError;
 
     #[tracing::instrument(level = "trace")]
-    async fn authenticate(&self, creds: Self::Credentials) -> Result<Option<Self::User>, Self::Error> {
+    async fn authenticate(&self, _creds: Self::Credentials) -> Result<Option<Self::User>, Self::Error> {
         Ok(None)
     }
 
@@ -98,3 +98,5 @@ impl AuthnBackend for SessionAdapter {
         Ok(None)
     }
 }
+
+pub type AuthSession = axum_login::AuthSession<SessionAdapter>;

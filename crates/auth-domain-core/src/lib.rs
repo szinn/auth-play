@@ -4,17 +4,17 @@ use auth::AuthService;
 use auth_db::RepositoryAdapters;
 use auth_domain_api::{AuthApi, AuthDomainApi, HealthApi};
 use auth_utils::{arcbox, arcbox::ArcBox};
-use error::Error;
 use health::HealthService;
 
 mod error;
+mod services;
 
-mod auth;
-mod health;
+pub use error::*;
+pub(crate) use services::*;
 
-#[tracing::instrument(level = "trace", skip(_repository_adapters))]
-pub async fn create_auth(_repository_adapters: Arc<RepositoryAdapters>) -> Result<AuthDomainApi, Error> {
-    let auth_service = AuthService::new();
+#[tracing::instrument(level = "trace", skip(repository_adapters))]
+pub async fn create_auth(repository_adapters: Arc<RepositoryAdapters>) -> Result<AuthDomainApi, Error> {
+    let auth_service = AuthService::new(repository_adapters.repository.clone(), repository_adapters.user_adapter.clone());
     let health_service = HealthService::new();
 
     let auth_api: ArcBox<dyn AuthApi> = arcbox!(auth_service);

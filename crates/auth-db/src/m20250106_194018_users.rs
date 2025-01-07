@@ -13,7 +13,8 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(ColumnDef::new(Users::Id).big_integer().not_null().auto_increment().primary_key())
                     .col(ColumnDef::new(Users::Name).string().not_null())
-                    .col(ColumnDef::new(Users::Email).string().not_null())
+                    .col(ColumnDef::new(Users::Email).string().not_null().unique_key())
+                    .col(ColumnDef::new(Users::Password).string().not_null())
                     .to_owned(),
             )
             .await?;
@@ -45,6 +46,7 @@ pub(crate) enum Users {
     Id,
     Name,
     Email,
+    Password,
     #[sea_orm(iden = "idx_users_email")]
     IndexEmail,
 }

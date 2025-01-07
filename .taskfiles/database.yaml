@@ -5,7 +5,7 @@ tasks:
   init:
     desc: Initialize database
     cmds:
-      - '{{.PROJECT_DIR}}/scripts/create-database'
+      - "{{.PROJECT_DIR}}/scripts/create-database"
 
   db:
     desc: Connect to database

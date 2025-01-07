@@ -13,6 +13,7 @@ publish = false
 [dependencies]
 auth-db.workspace = true
 auth-domain-api.workspace = true
+auth-domain-models.workspace = true
 auth-utils.workspace = true
 
 async-trait.workspace = true

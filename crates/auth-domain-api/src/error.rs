@@ -5,4 +5,7 @@ pub enum Error {
 
     #[error("Not found")]
     NotFound,
+
+    #[error(transparent)]
+    DatabaseError(#[from] auth_db::Error),
 }

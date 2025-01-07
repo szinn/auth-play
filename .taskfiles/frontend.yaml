@@ -9,7 +9,13 @@ tasks:
       - rm -rf .svelte-kit build node_modules
 
   install:
-    desc: _Install node modules
+    desc: Install node modules
     dir: frontend
     cmds:
       - npm install
+
+  format:
+    desc: Format frontend code
+    dir: frontend
+    cmds:
+      - prettier -w .

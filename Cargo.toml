@@ -7,6 +7,7 @@ members = [
     "crates/auth-db",
     "crates/auth-domain-api",
     "crates/auth-domain-core",
+    "crates/auth-domain-models",
     "crates/auth-utils",
 ]
 
@@ -26,10 +27,11 @@ auth-api-frontend = { path = "crates/auth-api-frontend" }
 auth-db = { path = "crates/auth-db" }
 auth-domain-api = { path = "crates/auth-domain-api" }
 auth-domain-core = { path = "crates/auth-domain-core" }
+auth-domain-models= { path = "crates/auth-domain-models" }
 auth-utils = { path = "crates/auth-utils" }
 
-async-trait = "0.1.84"
-serde_json = "1.0.134"
+async-trait = "0.1.85"
+serde_json = "1.0.135"
 thiserror = "2.0.9"
 tokio-graceful-shutdown = "0.15.0"
 tracing-log = "0.2.0"
