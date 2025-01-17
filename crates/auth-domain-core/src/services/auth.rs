@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use auth_db::{adapters::UserAdapter, Repository};
-use auth_domain_api::{AuthApi, Error};
+use auth_domain_api::{AuthApi, Error, UserInfo};
 use auth_domain_models::auth::{NewUser, User};
 use auth_utils::arcbox::ArcBox;
 
@@ -38,5 +38,41 @@ impl AuthApi for AuthService {
             Ok(user) => Ok(user),
             Err(err) => Err(Error::DatabaseError(err)),
         }
+    }
+
+    #[tracing::instrument(level = "trace", skip(self, password))]
+    async fn authenticate(&self, email: &str, password: &str) -> Result<UserInfo, Error> {
+        let adapter = self.user_adapter.clone();
+        let email = email.to_string();
+        let password = password.to_string();
+
+        let result: Result<User, auth_db::Error> = self
+            .repository
+            .transaction(|tx| Box::pin(async move { adapter.authenticate_user(tx, &email, &password).await }))
+            .await;
+        tracing::info!("Got lookup result {:?}", result);
+        match result {
+            Ok(user) => Ok(UserInfo {
+                id: user.id,
+                name: user.name.clone(),
+                email: user.email.clone(),
+                password_sha: user.password_sha.clone(),
+            }),
+            Err(_) => Err(Error::NotFound),
+        }
+    }
+
+    #[tracing::instrument(level = "trace", skip(self))]
+    async fn get_user(&self, id: i64) -> Result<UserInfo, Error> {
+        let adapter = self.user_adapter.clone();
+
+        let result: Result<User, auth_db::Error> = self
+            .repository
+            .transaction(|tx| Box::pin(async move { adapter.get_user_by_id(tx, id).await }))
+            .await;
+
+        tracing::info!("Got user id {} result {:?}", id, result);
+
+        Err(Error::NotFound)
     }
 }

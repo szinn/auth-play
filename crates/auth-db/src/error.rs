@@ -8,6 +8,9 @@ pub enum Error {
     #[error("Not found")]
     NotFound,
 
+    #[error("Invalid email or password")]
+    InvalidPassword,
+
     #[error(transparent)]
     SeaOrm(#[from] DbErr),
 

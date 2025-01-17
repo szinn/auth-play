@@ -5,4 +5,7 @@ pub enum ApiError {
 
     #[error(transparent)]
     DomainError(#[from] auth_domain_api::Error),
+
+    #[error("Not found - {}", _0)]
+    UserNotFound(String),
 }

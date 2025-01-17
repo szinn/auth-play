@@ -7,6 +7,8 @@ pub struct NewUser {
 
 #[derive(Debug, Clone)]
 pub struct User {
+    pub id: i64,
     pub name: String,
     pub email: String,
+    pub password_sha: String,
 }

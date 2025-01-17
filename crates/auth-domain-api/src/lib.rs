@@ -7,7 +7,7 @@ use auth_utils::arcbox::ArcBox;
 
 pub use error::Error;
 
-pub use auth::AuthApi;
+pub use auth::{AuthApi, UserInfo};
 pub use health::HealthApi;
 
 pub struct AuthDomainApi {

@@ -16,4 +16,5 @@ auth-domain-models.workspace = true
 auth-utils.workspace = true
 
 async-trait.workspace = true
+serde.workspace = true
 thiserror.workspace = true

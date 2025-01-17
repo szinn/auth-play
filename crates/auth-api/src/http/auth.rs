@@ -13,13 +13,19 @@ pub(crate) fn get_routes(session_adapter: SessionAdapter) -> Router<()> {
         .route("/session", get(self::get::session))
         .route("/register", post(self::post::register))
         .route("/login", post(self::post::login))
+        .route("/logout", get(self::get::logout))
         .with_state(session_adapter)
         .layer(TimeoutLayer::new(Duration::from_secs(2)))
 }
 
 mod get {
-    use axum::{extract::State, Json};
+    use axum::{
+        extract::State,
+        response::{IntoResponse, Redirect},
+        Json,
+    };
     use serde::Serialize;
+    use tower_sessions::Session;
 
     use crate::{http::session::adapter::AuthSession, ApiError};
 
@@ -42,6 +48,13 @@ mod get {
 
         Ok(Json(response))
     }
+
+    #[tracing::instrument(level = "trace", skip(session))]
+    pub async fn logout(session: Session) -> impl IntoResponse {
+        tracing::info!("Logging out");
+        session.flush().await.unwrap();
+        Redirect::to("/app").into_response()
+    }
 }
 
 mod post {
@@ -51,10 +64,14 @@ mod post {
         response::{IntoResponse, Redirect},
         Json,
     };
+    use axum_login::AuthnBackend;
     use serde::{Deserialize, Serialize};
     use tower_sessions::Session;
 
-    use crate::ApiError;
+    use crate::{
+        http::session::adapter::{AuthSession, Credentials},
+        ApiError,
+    };
 
     use super::SessionAdapter;
 
@@ -90,15 +107,39 @@ mod post {
         Ok(Redirect::to("/app").into_response())
     }
 
-    #[tracing::instrument(level = "trace", skip(session_adapter))]
+    #[tracing::instrument(level = "trace", skip(auth_session, session_adapter, payload))]
     pub async fn login(
-        session: Session,
+        mut auth_session: AuthSession,
         State(session_adapter): State<SessionAdapter>,
         Json(payload): Json<LoginRequest>,
     ) -> Result<Json<LoginResponse>, ApiError> {
-        Ok(Json(LoginResponse {
-            result: "error".to_string(),
-            message: Some("Not implemented".to_string()),
-        }))
+        let credentials = Credentials {
+            email: payload.email,
+            password: payload.password,
+            _next: None,
+        };
+
+        match session_adapter.authenticate(credentials).await? {
+            Some(user) => {
+                tracing::info!("Got user: {:?}", user);
+                let result = auth_session.login(&user).await;
+                tracing::info!("Got auth_session login={:?}", result);
+                if result.is_ok() {
+                    Ok(Json(LoginResponse {
+                        result: "success".to_string(),
+                        message: None,
+                    }))
+                } else {
+                    Ok(Json(LoginResponse {
+                        result: "error".to_string(),
+                        message: Some("Not implemented".to_string()),
+                    }))
+                }
+            }
+            None => Ok(Json(LoginResponse {
+                result: "error".to_string(),
+                message: Some("Not implemented".to_string()),
+            })),
+        }
     }
 }

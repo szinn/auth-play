@@ -12,9 +12,10 @@ use crate::ApiError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
-    id: i64,
-    pub username: String,
-    password: String,
+    pub id: i64,
+    pub name: String,
+    pub email: String,
+    pub password_sha: String,
 }
 
 impl AuthUser for User {
@@ -25,17 +26,17 @@ impl AuthUser for User {
     }
 
     fn session_auth_hash(&self) -> &[u8] {
-        self.password.as_bytes() // We use the password hash as the auth
-                                 // hash--what this means
-                                 // is when the user changes their password the
-                                 // auth session becomes invalid.
+        self.password_sha.as_bytes() // We use the password sha as the auth
+                                     // hash--what this means
+                                     // is when the user changes their password the
+                                     // auth session becomes invalid.
     }
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Credentials {
-    pub _username: String,
-    pub _password: String,
+    pub email: String,
+    pub password: String,
     pub _next: Option<String>,
 }
 
@@ -88,14 +89,31 @@ impl AuthnBackend for SessionAdapter {
     type Credentials = Credentials;
     type Error = ApiError;
 
-    #[tracing::instrument(level = "trace")]
-    async fn authenticate(&self, _creds: Self::Credentials) -> Result<Option<Self::User>, Self::Error> {
-        Ok(None)
+    #[tracing::instrument(level = "trace", skip(self, creds))]
+    async fn authenticate(&self, creds: Self::Credentials) -> Result<Option<Self::User>, Self::Error> {
+        let result = self.auth_api.authenticate(&creds.email, &creds.password).await;
+        tracing::info!("Got {:?}", result);
+        match result {
+            Ok(user_info) => Ok(Some(Self::User {
+                id: user_info.id,
+                name: user_info.name.clone(),
+                email: user_info.email.clone(),
+                password_sha: user_info.password_sha.clone(),
+            })),
+            Err(_) => Err(Self::Error::UserNotFound(creds.email.clone())),
+        }
     }
 
     #[tracing::instrument(level = "trace")]
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        Ok(None)
+        let user_info = self.auth_api.get_user(*user_id).await?;
+
+        Ok(Some(Self::User {
+            id: user_info.id,
+            name: user_info.name.clone(),
+            email: user_info.email.clone(),
+            password_sha: user_info.password_sha.clone(),
+        }))
     }
 }
 
