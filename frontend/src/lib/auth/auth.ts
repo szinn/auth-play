@@ -30,3 +30,14 @@ export async function postLogin(email: string, password: string) {
     });
     return await res.json();
 }
+
+export async function getLogout() {
+    const res = await fetch('/auth/logout', {
+        method: 'GET',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+        },
+    });
+    return await res.json();
+}

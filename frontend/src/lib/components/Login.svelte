@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getSession, postLogin, userInfo } from '$lib/auth/auth';
+    import { postLogin, userInfo } from '$lib/auth/auth';
 
     let email: string = '';
     let password: string = '';
@@ -9,6 +9,11 @@
         let loginResponse = await postLogin(email, password);
         if (loginResponse.result === 'error') {
             errorMessage = loginResponse.message;
+        } else {
+            return {
+                status: 302,
+                redirect: '/app'
+            };
         }
     }
 </script>

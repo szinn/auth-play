@@ -50,7 +50,6 @@ impl AuthApi for AuthService {
             .repository
             .transaction(|tx| Box::pin(async move { adapter.authenticate_user(tx, &email, &password).await }))
             .await;
-        tracing::info!("Got lookup result {:?}", result);
         match result {
             Ok(user) => Ok(UserInfo {
                 id: user.id,
@@ -70,9 +69,15 @@ impl AuthApi for AuthService {
             .repository
             .transaction(|tx| Box::pin(async move { adapter.get_user_by_id(tx, id).await }))
             .await;
-
-        tracing::info!("Got user id {} result {:?}", id, result);
-
-        Err(Error::NotFound)
+        tracing::info!("get_user result: {:?}", result);
+        match result {
+            Ok(user) => Ok(UserInfo {
+                id: user.id,
+                name: user.name.clone(),
+                email: user.email.clone(),
+                password_sha: user.password_sha.clone(),
+            }),
+            Err(_) => Err(Error::NotFound),
+        }
     }
 }

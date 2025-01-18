@@ -65,7 +65,12 @@ impl UserAdapter for UserAdapterImpl {
 
     #[tracing::instrument(level = "trace", skip(self, tx))]
     async fn get_user_by_id(&self, tx: &mut DatabaseTransaction, id: i64) -> Result<User, Error> {
-        Err(Error::NotFound)
+        let model = prelude::Users::find().filter(users::Column::Id.eq(id)).one(tx).await?;
+
+        match model {
+            Some(user) => Ok(UserAdapterImpl::from_model(user)),
+            None => Err(Error::NotFound),
+        }
     }
 
     #[tracing::instrument(level = "trace", skip(self, tx, password))]

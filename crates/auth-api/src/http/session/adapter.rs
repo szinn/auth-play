@@ -92,7 +92,6 @@ impl AuthnBackend for SessionAdapter {
     #[tracing::instrument(level = "trace", skip(self, creds))]
     async fn authenticate(&self, creds: Self::Credentials) -> Result<Option<Self::User>, Self::Error> {
         let result = self.auth_api.authenticate(&creds.email, &creds.password).await;
-        tracing::info!("Got {:?}", result);
         match result {
             Ok(user_info) => Ok(Some(Self::User {
                 id: user_info.id,
@@ -104,10 +103,10 @@ impl AuthnBackend for SessionAdapter {
         }
     }
 
-    #[tracing::instrument(level = "trace")]
+    #[tracing::instrument(level = "trace", skip(self))]
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
         let user_info = self.auth_api.get_user(*user_id).await?;
-
+        tracing::info!("Got user: {:?}", user_info);
         Ok(Some(Self::User {
             id: user_info.id,
             name: user_info.name.clone(),

@@ -5,7 +5,7 @@ use auth_api_frontend::Dist;
 use auth_domain_api::AuthDomainApi;
 use axum::{
     extract::Request,
-    response::{Html, IntoResponse, Redirect, Response},
+    response::{IntoResponse, Redirect, Response},
     routing::get,
     Router,
 };
@@ -85,7 +85,6 @@ async fn static_handler(uri: Uri) -> impl IntoResponse {
     match Dist::get(path) {
         Some(content) => {
             let mime = mime_guess::from_path(path).first_or_octet_stream();
-            tracing::info!("Found content for {} with mime type {}", path, mime);
             ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
         }
         None => {
@@ -104,8 +103,7 @@ async fn index_html() -> Response<axum::body::Body> {
     match Dist::get(INDEX_HTML) {
         Some(content) => {
             let mime = mime_guess::from_path(INDEX_HTML).first_or_octet_stream();
-            tracing::info!("Found actual content for index.html with mime type {}", mime);
-            Html(content.data).into_response()
+            ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
         }
         None => not_found().await,
     }
