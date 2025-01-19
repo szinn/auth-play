@@ -2,7 +2,10 @@ use argon2::{
     password_hash::{errors::Result, rand_core::OsRng, PasswordHasher, SaltString},
     Argon2, PasswordHash, PasswordVerifier,
 };
-use sha3::{Digest, Sha3_256};
+use sha3::{
+    digest::{ExtendableOutput, Update, XofReader},
+    Shake128,
+};
 
 pub fn hash_password(string: &str) -> Result<String> {
     let salt = SaltString::generate(&mut OsRng);
@@ -23,11 +26,13 @@ pub fn check_password(string: &str, hash: &str) -> Result<bool> {
 }
 
 pub fn hash_string(string: &str) -> String {
-    let mut hasher = Sha3_256::new();
+    let mut hasher = Shake128::default();
     hasher.update(string.as_bytes());
-    let hash = hasher.finalize();
+    let mut reader = hasher.finalize_xof();
+    let mut buf = [0u8; 10];
+    reader.read(&mut buf);
 
-    base16::encode_lower(&hash)
+    base16::encode_lower(&buf)
 }
 
 #[cfg(test)]
