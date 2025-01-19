@@ -39,7 +39,9 @@ pub fn get_routes(config: &Configuration, auth_domain_api: Arc<AuthDomainApi>) -
         .with_expiry(Expiry::OnInactivity(Duration::days(1)))
         .with_signed(key);
 
-    let auth_layer = AuthManagerLayerBuilder::new(session_adapter.clone(), session_layer).build();
+    let auth_layer = AuthManagerLayerBuilder::new(session_adapter.clone(), session_layer)
+        .with_data_key("auth-play")
+        .build();
 
     axum::Router::new()
         .nest("/api", api_routes)

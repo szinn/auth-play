@@ -24,7 +24,6 @@ mod get {
         Json,
     };
     use serde::Serialize;
-    use tower_sessions::Session;
 
     use crate::{http::session::adapter::AuthSession, ApiError};
 
@@ -47,9 +46,9 @@ mod get {
         Ok(Json(response))
     }
 
-    #[tracing::instrument(level = "trace", skip(session))]
-    pub async fn logout(session: Session) -> impl IntoResponse {
-        session.flush().await.unwrap();
+    #[tracing::instrument(level = "trace", skip(auth_session))]
+    pub async fn logout(mut auth_session: AuthSession) -> impl IntoResponse {
+        let _result = auth_session.logout().await;
         Redirect::to("/app").into_response()
     }
 }
