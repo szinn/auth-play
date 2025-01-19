@@ -97,8 +97,8 @@ mod post {
             password: payload.password.clone(),
         };
 
-        let user = session_adapter.auth_api.register(&new_user).await?;
-        tracing::info!("Got user: {:?}", user);
+        let _user = session_adapter.auth_api.register(&new_user).await?;
+
         Ok(Redirect::to("/app").into_response())
     }
 

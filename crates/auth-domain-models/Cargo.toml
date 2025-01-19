@@ -11,3 +11,5 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
+chrono.workspace = true
+uuid.workspace = true

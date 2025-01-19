@@ -14,7 +14,7 @@ pub(crate) use services::*;
 
 #[tracing::instrument(level = "trace", skip(repository_adapters))]
 pub async fn create_auth(repository_adapters: Arc<RepositoryAdapters>) -> Result<AuthDomainApi, Error> {
-    let auth_service = AuthService::new(repository_adapters.repository.clone(), repository_adapters.user_adapter.clone());
+    let auth_service = AuthService::new(repository_adapters.clone());
     let health_service = HealthService::new();
 
     let auth_api: ArcBox<dyn AuthApi> = arcbox!(auth_service);

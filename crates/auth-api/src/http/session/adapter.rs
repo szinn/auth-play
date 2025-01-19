@@ -1,12 +1,15 @@
 use async_trait::async_trait;
 use auth_domain_api::AuthApi;
+use auth_domain_models::auth::{NewSession, Session};
 use auth_utils::arcbox::ArcBox;
 use axum_login::{AuthUser, AuthnBackend, UserId};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tower_sessions::{
     session::{Id, Record},
-    session_store, MemoryStore, SessionStore,
+    session_store, SessionStore,
 };
+use uuid::Uuid;
 
 use crate::ApiError;
 
@@ -43,14 +46,23 @@ pub struct Credentials {
 #[derive(Clone)]
 pub(crate) struct SessionAdapter {
     pub auth_api: ArcBox<dyn AuthApi>,
-    store: MemoryStore,
 }
 
 impl SessionAdapter {
     pub(crate) fn new(auth_api: ArcBox<dyn AuthApi>) -> Self {
-        let store = MemoryStore::default();
+        Self { auth_api }
+    }
 
-        Self { auth_api, store }
+    fn to_uuid(id: i128) -> Uuid {
+        let bytes = id.to_le_bytes();
+
+        Uuid::from_bytes_le(bytes)
+    }
+
+    fn from_uuid(uuid: &Uuid) -> i128 {
+        let bytes = uuid.to_bytes_le();
+
+        i128::from_le_bytes(bytes)
     }
 }
 
@@ -64,22 +76,68 @@ impl std::fmt::Debug for SessionAdapter {
 impl SessionStore for SessionAdapter {
     #[tracing::instrument(level = "trace")]
     async fn create(&self, record: &mut Record) -> session_store::Result<()> {
-        self.store.create(record).await
+        let data = rmp_serde::to_vec(record);
+        if data.is_err() {
+            return Err(session_store::Error::Encode("create session record".to_string()));
+        }
+
+        let new_session = NewSession {
+            data: data.unwrap(),
+            expiry: DateTime::<Utc>::from_timestamp(record.expiry_date.unix_timestamp(), 0).unwrap(),
+        };
+
+        match self.auth_api.create_session(&new_session).await {
+            Ok(session) => {
+                record.id = Id(SessionAdapter::from_uuid(&session.id));
+                Ok(())
+            }
+            Err(_) => Err(session_store::Error::Encode("create session record".to_string())),
+        }
     }
 
     #[tracing::instrument(level = "trace")]
     async fn save(&self, record: &Record) -> session_store::Result<()> {
-        self.store.save(record).await
+        let data = rmp_serde::to_vec(record);
+        if data.is_err() {
+            return Err(session_store::Error::Encode("save session record".to_string()));
+        }
+
+        let session = Session {
+            id: SessionAdapter::to_uuid(record.id.0),
+            data: data.unwrap(),
+            expiry: DateTime::<Utc>::from_timestamp(record.expiry_date.unix_timestamp(), 0).unwrap(),
+        };
+
+        match self.auth_api.save_session(&session).await {
+            Ok(_) => Ok(()),
+            Err(_) => Err(session_store::Error::Encode("save session record".to_string())),
+        }
     }
 
     #[tracing::instrument(level = "trace")]
     async fn load(&self, session_id: &Id) -> session_store::Result<Option<Record>> {
-        self.store.load(session_id).await
+        let uuid = SessionAdapter::to_uuid(session_id.0);
+
+        match self.auth_api.load_session(&uuid).await {
+            Ok(Some(session)) => {
+                let mut record: Record = rmp_serde::from_slice(&session.data).unwrap();
+                record.id = Id(SessionAdapter::from_uuid(&session.id));
+
+                Ok(Some(record))
+            }
+            Ok(None) => Ok(None),
+            Err(_) => Ok(None),
+        }
     }
 
     #[tracing::instrument(level = "trace")]
     async fn delete(&self, session_id: &Id) -> session_store::Result<()> {
-        self.store.delete(session_id).await
+        let uuid = SessionAdapter::to_uuid(session_id.0);
+
+        match self.auth_api.delete_session(&uuid).await {
+            Ok(_) => Ok(()),
+            Err(_) => Err(session_store::Error::Backend("delete session error".to_string())),
+        }
     }
 }
 
@@ -106,7 +164,6 @@ impl AuthnBackend for SessionAdapter {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
         let user_info = self.auth_api.get_user(*user_id).await?;
-        tracing::info!("Got user: {:?}", user_info);
         Ok(Some(Self::User {
             id: user_info.id,
             name: user_info.name.clone(),
@@ -117,3 +174,25 @@ impl AuthnBackend for SessionAdapter {
 }
 
 pub type AuthSession = axum_login::AuthSession<SessionAdapter>;
+
+#[cfg(test)]
+mod test {
+    use uuid::Uuid;
+
+    use super::SessionAdapter;
+
+    #[test]
+    fn id_uuid() {
+        let id = -1;
+        let uuid = SessionAdapter::to_uuid(id);
+        assert_eq!(id, SessionAdapter::from_uuid(&uuid));
+
+        let id = 1;
+        let uuid = SessionAdapter::to_uuid(id);
+        assert_eq!(id, SessionAdapter::from_uuid(&uuid));
+
+        let uuid = Uuid::now_v7();
+        let id = SessionAdapter::from_uuid(&uuid);
+        assert_eq!(uuid, SessionAdapter::to_uuid(id));
+    }
+}

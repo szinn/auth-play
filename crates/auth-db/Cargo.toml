@@ -15,11 +15,13 @@ auth-domain-models.workspace = true
 auth-utils.workspace = true
 
 async-trait.workspace = true
+chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 tracing-log.workspace = true
+uuid.workspace = true
 
 [dependencies.sea-orm]
 version = "1.0.0"
