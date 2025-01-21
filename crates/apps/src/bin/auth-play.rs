@@ -23,6 +23,9 @@ async fn main() -> Result<()> {
     let http_config = Configuration {
         port: config.http.port,
         secret_key: config.http.secret_key,
+        google_oauth_client_id: config.http.google_oauth_client_id,
+        google_oauth_client_secret: config.http.google_oauth_client_secret,
+        google_oauth_redirect_url: config.http.google_oauth_redirect_url,
     };
 
     let server = Toplevel::new(|s| async move {

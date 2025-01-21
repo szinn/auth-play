@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use auth_domain_api::AuthApi;
 use auth_domain_models::auth::{NewSession, Session};
-use auth_utils::arcbox::ArcBox;
+use auth_utils::{arcbox, arcbox::ArcBox};
 use axum_login::{AuthUser, AuthnBackend, UserId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ use tower_sessions::{
 };
 use uuid::Uuid;
 
-use crate::ApiError;
+use crate::{http::Configuration, ApiError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
@@ -45,12 +45,17 @@ pub struct Credentials {
 
 #[derive(Clone)]
 pub(crate) struct SessionAdapter {
+    pub config: ArcBox<Configuration>,
     pub auth_api: ArcBox<dyn AuthApi>,
 }
 
 impl SessionAdapter {
-    pub(crate) fn new(auth_api: ArcBox<dyn AuthApi>) -> Self {
-        Self { auth_api }
+    pub(crate) fn new(config: &Configuration, auth_api: ArcBox<dyn AuthApi>) -> Self {
+        let config = config.clone();
+        Self {
+            config: arcbox!(config),
+            auth_api,
+        }
     }
 
     fn to_uuid(id: i128) -> Uuid {

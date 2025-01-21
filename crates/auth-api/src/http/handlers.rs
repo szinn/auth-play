@@ -24,7 +24,7 @@ use super::{auth, health, session::SessionAdapter, v1, Configuration};
 static INDEX_HTML: &str = "index.html";
 
 pub fn get_routes(config: &Configuration, auth_domain_api: Arc<AuthDomainApi>) -> Router<()> {
-    let session_adapter = SessionAdapter::new(auth_domain_api.auth_api.clone());
+    let session_adapter = SessionAdapter::new(config, auth_domain_api.auth_api.clone());
 
     let v1_routes = v1::get_routes();
     let api_routes = Router::new().nest("/v1", v1_routes);

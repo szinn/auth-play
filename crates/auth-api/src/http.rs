@@ -18,6 +18,9 @@ pub(crate) mod v1;
 pub struct Configuration {
     pub port: u16,
     pub secret_key: String,
+    pub google_oauth_client_id: String,
+    pub google_oauth_client_secret: String,
+    pub google_oauth_redirect_url: String,
 }
 
 pub async fn start_server(config: Configuration, auth_domain_api: Arc<AuthDomainApi>, subsys: SubsystemHandle) -> Result<(), ApiError> {

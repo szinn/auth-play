@@ -16,6 +16,12 @@ pub struct AuthPlayHttpConfig {
     pub port: u16,
     /// (required) Secret key for encrypting cookies.
     pub secret_key: String,
+    /// (required) Google OAuth client id.
+    pub google_oauth_client_id: String,
+    /// (required) Google OAuth client secret.
+    pub google_oauth_client_secret: String,
+    /// (required) Google OAuth redirect URL.
+    pub google_oauth_redirect_url: String,
 }
 
 #[derive(Debug, Deserialize)]
