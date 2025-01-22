@@ -3,6 +3,7 @@ use std::{net::SocketAddr, sync::Arc};
 use auth_domain_api::AuthDomainApi;
 use axum::response::{IntoResponse, Response};
 use hyper::StatusCode;
+use session::SessionAdapter;
 use tokio::net::TcpListener;
 use tokio_graceful_shutdown::{SubsystemBuilder, SubsystemHandle};
 
@@ -23,6 +24,13 @@ pub struct Configuration {
     pub google_oauth_redirect_url: String,
 }
 
+#[derive(Clone)]
+pub(crate) struct ApiData {
+    pub(crate) config: Configuration,
+    pub(crate) auth_domain_api: Arc<AuthDomainApi>,
+    pub(crate) session_adapter: SessionAdapter,
+}
+
 pub async fn start_server(config: Configuration, auth_domain_api: Arc<AuthDomainApi>, subsys: SubsystemHandle) -> Result<(), ApiError> {
     tracing::trace!("Starting http service");
 
@@ -30,7 +38,13 @@ pub async fn start_server(config: Configuration, auth_domain_api: Arc<AuthDomain
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().map_err(|_| ApiError::BadPort(port))?;
     let listener = TcpListener::bind(addr).await.unwrap();
 
-    let routes = handlers::get_routes(&config, auth_domain_api.clone());
+    let api_data = Arc::new(ApiData {
+        config,
+        auth_domain_api: auth_domain_api.clone(),
+        session_adapter: SessionAdapter::new(auth_domain_api.auth_api.clone()),
+    });
+
+    let routes = handlers::get_routes(api_data);
 
     tracing::info!("Listening on port {}", port);
     loop {

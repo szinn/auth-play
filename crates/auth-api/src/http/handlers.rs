@@ -2,7 +2,6 @@ use crate::ApiError;
 use std::{net::SocketAddr, sync::Arc};
 
 use auth_api_frontend::Dist;
-use auth_domain_api::AuthDomainApi;
 use axum::{
     extract::Request,
     response::{IntoResponse, Redirect, Response},
@@ -19,29 +18,28 @@ use tower_http::timeout::TimeoutLayer;
 use tower_sessions::cookie::{time::Duration, Key};
 use tower_sessions::Expiry;
 
-use super::{auth, health, session::SessionAdapter, v1, Configuration};
+use super::{auth, health, session::SessionAdapter, v1, ApiData};
 
 static INDEX_HTML: &str = "index.html";
 
-pub fn get_routes(config: &Configuration, auth_domain_api: Arc<AuthDomainApi>) -> Router<()> {
-    let session_adapter = SessionAdapter::new(config, auth_domain_api.auth_api.clone());
-
+pub fn get_routes(api_data: Arc<ApiData>) -> Router<()> {
     let v1_routes = v1::get_routes();
     let api_routes = Router::new().nest("/v1", v1_routes);
-    let auth_routes = auth::get_routes(session_adapter.clone());
-    let health_route: Router = Router::new().route("/", get(health::health)).with_state(auth_domain_api.health_api.clone());
+    let auth_routes = auth::get_routes(api_data.clone());
+    let health_route: Router = Router::new()
+        .route("/", get(health::health))
+        .with_state(api_data.auth_domain_api.health_api.clone());
 
     // Generate a cryptographic key to sign the session cookie.
-    let key = Key::from(config.secret_key.as_bytes());
+    let session_adapter = api_data.session_adapter.clone();
+    let key = Key::from(api_data.config.secret_key.as_bytes());
 
     let session_layer = SessionManagerLayer::new(session_adapter.clone())
         .with_secure(false)
         .with_expiry(Expiry::OnInactivity(Duration::days(1)))
         .with_signed(key);
 
-    let auth_layer = AuthManagerLayerBuilder::new(session_adapter.clone(), session_layer)
-        .with_data_key("auth-play")
-        .build();
+    let auth_layer = AuthManagerLayerBuilder::new(session_adapter, session_layer).with_data_key("auth-play").build();
 
     axum::Router::new()
         .nest("/api", api_routes)

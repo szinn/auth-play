@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     routing::{get, post},
@@ -6,15 +6,15 @@ use axum::{
 };
 use tower_http::timeout::TimeoutLayer;
 
-use super::session::SessionAdapter;
+use super::ApiData;
 
-pub(crate) fn get_routes(session_adapter: SessionAdapter) -> Router<()> {
+pub(crate) fn get_routes(api_data: Arc<ApiData>) -> Router<()> {
     axum::Router::new()
         .route("/session", get(self::get::session))
         .route("/register", post(self::post::register))
         .route("/login", post(self::post::login))
         .route("/logout", get(self::get::logout))
-        .with_state(session_adapter)
+        .with_state(api_data)
         .layer(TimeoutLayer::new(Duration::from_secs(2)))
 }
 
@@ -54,6 +54,8 @@ mod get {
 }
 
 mod post {
+    use std::sync::Arc;
+
     use auth_domain_models::auth::NewUser;
     use axum::{
         extract::State,
@@ -68,7 +70,7 @@ mod post {
         ApiError,
     };
 
-    use super::SessionAdapter;
+    use super::ApiData;
 
     #[derive(Debug, Serialize, Deserialize)]
     pub(crate) struct RegisterRequest {
@@ -89,28 +91,28 @@ mod post {
         message: Option<String>,
     }
 
-    #[tracing::instrument(level = "trace", skip(session_adapter))]
-    pub async fn register(State(session_adapter): State<SessionAdapter>, Json(payload): Json<RegisterRequest>) -> Result<impl IntoResponse, ApiError> {
+    #[tracing::instrument(level = "trace", skip(api_data))]
+    pub async fn register(State(api_data): State<Arc<ApiData>>, Json(payload): Json<RegisterRequest>) -> Result<impl IntoResponse, ApiError> {
         let new_user = NewUser {
             name: payload.name.clone(),
             email: payload.email.clone(),
             password: payload.password.clone(),
         };
 
-        let _user = session_adapter.auth_api.register(&new_user).await?;
+        let _user = api_data.session_adapter.auth_api.register(&new_user).await?;
 
         Ok(Redirect::to("/app").into_response())
     }
 
-    #[tracing::instrument(level = "trace", skip(auth_session, session_adapter, payload))]
-    pub async fn login(mut auth_session: AuthSession, State(session_adapter): State<SessionAdapter>, Json(payload): Json<LoginRequest>) -> impl IntoResponse {
+    #[tracing::instrument(level = "trace", skip(auth_session, api_data, payload))]
+    pub async fn login(mut auth_session: AuthSession, State(api_data): State<Arc<ApiData>>, Json(payload): Json<LoginRequest>) -> impl IntoResponse {
         let credentials = Credentials {
             email: payload.email,
             password: payload.password,
             _next: None,
         };
 
-        let result = session_adapter.authenticate(credentials).await;
+        let result = api_data.session_adapter.authenticate(credentials).await;
         if result.is_err() {
             return Json(LoginResponse {
                 result: "error".to_string(),
