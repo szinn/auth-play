@@ -13,5 +13,8 @@ publish = false
 [dependencies]
 argon2 = "0.5.3"
 base16 = "0.2.1"
-rand_core = { version = "0.6", features = ["std"] }
 sha3 = "0.10.8"
+
+[dependencies.rand_core]
+version = "0.9.0"
+features = ["std"]
